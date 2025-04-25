@@ -46,25 +46,64 @@
     #aquarium {
         position: relative;
         width: 100%;
-        height: 200px;
+        height: 270px;
         background: #56c2e6;
         overflow: hidden;
         border-radius: 10px;
+        margin-bottom: none;
     }
     .fish {
         position: absolute;
-        width: 40px;
+        width: 60px;
         cursor: pointer;
     }
 
     #aquarium-container {
         display: flex;
         flex-direction: column;
+        margin-left: 50px;
+        margin-right: 50px;
     }
-
+    
     #aquarium-selector {
         display: flex;
         flex-direction: horizontal;
+        margin-top: 100px;
+        margin-bottom: 100px;
+        align-items: center;
+    }
+
+
+    #fishbowl {
+        width: 600px;
+        height: 600px;
+        background-image: url('images/fishbowl.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+        overflow: hidden;    /* hide anything outside */
+        margin-right: 0;
+    }
+
+        /* style the selected fish inside the fishbowl */
+    #fishbowl img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100px; /* adjust fish size */
+        height: auto;
+        transform: translate(-50%, -50%); /* center it perfectly */
+        pointer-events: none; /* prevent accidental clicks on the fish */
+    }
+
+    #diversity-chart {
+        margin-left: -280px;
+    }
+
+    #marine-chart {
+        margin-left: 300px;   
+        margin-right: 20px;
     }
 
     #map-container {
@@ -190,10 +229,13 @@
     <div id = "aquarium"> </div>
 
     <div id = "aquarium-selector"> 
-        <p> fish selection </p>
-        <div id = "fishbowl"> </div>
+        
+        <div id="fishbowl-container"> 
+            <p> fish selection </p>
+            <div id = "fishbowl"> </div>
+        </div>
         <div id = "diversity-chart"> 
-            <svg id = "marine-chart" width = "600" height = "200"> </svg>
+            <svg id = "marine-chart" width = "800" height = "350"> </svg>
         </div>
     </div>
   </div>
@@ -210,7 +252,7 @@
 
   <div class="tooltip" style="display:none;"></div>
   <script>
-    const fishImages = ['images/fish.png', 'images/clown-fish.png', 'images/neon-tetras.png', 'images/puffer-fish.png', 'images/seahorse.png']; 
+    const fishImages = ['images/fish.png', 'images/clown-fish.png', 'images/neon-tetras.png', 'images/puffer-fish.png', 'images/seahorse.png', 'images/jellyfish.png', 'images/red-snapper-fish.png']; 
     // all icon images sourced from flat icon with following attribution: 
     /*  fish.png: 
     <a href="https://www.flaticon.com/free-icons/fish" title="fish icons">Fish icons created by Freepik - Flaticon</a>
@@ -227,6 +269,11 @@
     Clown Fish: 
     <a href="https://www.flaticon.com/free-icons/clown-fish" title="clown fish icons">Clown fish icons created by Freepik - Flaticon</a>
 
+    Jellyfish: 
+    <a href="https://www.flaticon.com/free-icons/jellyfish" title="jellyfish icons">Jellyfish icons created by BZZRINCANTATION - Flaticon</a>
+
+    Red Snapper: 
+    <a href="https://www.flaticon.com/free-icons/fish" title="fish icons">Fish icons created by Freepik - Flaticon</a>
     */
     const aquariumDiv = document.getElementById('aquarium');
     const fishbowl = document.getElementById('fishbowl');
@@ -255,7 +302,7 @@
         let x = Math.random() * container.clientWidth;  // random starting x
         let amplitude = 20 + Math.random() * 20;
         let frequency = 0.01 + Math.random() * 0.01;
-        let speed = (0.5 + Math.random()) * (Math.random() < 0.5 ? 1 : -1); // random direction
+        let speed = (0.5 + Math.random()* 0.2) * (Math.random() < 0.5 ? 1 : -1); // random direction
         let offset = Math.random() * (container.clientHeight - 50);
 
         function animate() {
@@ -433,8 +480,6 @@
     });
 
     function drawDiversityChart(values, location) {
-
-        //const cleaned = values.filter(d => d.Date && !isNaN(d.Date) && !isNaN(d["Species Observed"]));
 
         const svg = d3.select("#marine-chart").html("");
         const margin = { top: 20, right: 30, bottom: 50, left: 60 },
