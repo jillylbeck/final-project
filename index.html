@@ -63,6 +63,18 @@
       position: relative;
     }
 
+    #map svg {
+      margin-left: 20px;
+    }
+
+    #map g circle {
+      cursor: pointer;
+    }
+    
+    #map g circle:hover {
+      opacity: 0.8;
+    }
+    
     #charts {
       flex: 0 0 40%;                     
       min-width: 0;
@@ -94,6 +106,14 @@
       pointer-events: none;
       font-size: 0.9em;
     }
+
+    #map g circle.selected {
+      stroke: #fff;
+      stroke-width: 3px;
+      filter: drop-shadow(0 0 6px #fff);
+    }
+    
+    /*
     .legend {
       top: 640px;
       right: 30px;
@@ -120,6 +140,25 @@
     .svg-legend circle {
       stroke: none;
     }
+      */
+
+    .svg-legend {
+      background: rgba(0, 51, 78, 0.7);
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+    .svg-legend text {
+      fill: #fff;
+      font-size: 13px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .svg-legend circle {
+      stroke: #fff;
+      stroke-width: 1px;
+      r: 6;
+    }
+
   </style>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -202,9 +241,16 @@
       .attr("width", 800)
       .attr("height", 600);
 
+    //const projection = d3.geoNaturalEarth1()
+    //  .scale(160)
+    //  .translate([480, 300]);
+
+    const mapW = +svgMap.attr("width"),
+    mapH = +svgMap.attr("height");
+
     const projection = d3.geoNaturalEarth1()
       .scale(160)
-      .translate([480, 300]);
+      .translate([mapW * 0.55, mapH / 2]);
 
     const path = d3.geoPath().projection(projection);
 
@@ -256,14 +302,47 @@
               d3.select(this).transition().attr("r", 10);
               tooltip.style("display", "none");
             })
-            .on("click", () => drawChart(values, location));
+           // .on("click", () => drawChart(values, location));
+            .on("click", function(event) {
+             d3.selectAll("#map g circle").classed("selected", false);
+             d3.select(this).classed("selected", true);
+             const dotColor = d3.select(this).attr("fill");
+             drawChart(values, location, dotColor);
+           });
 
             point.append("text")
-            .attr("y", -16)              
+           .attr("y", -16)              
             .attr("text-anchor", "middle")
             .attr("fill", "navy")
             .style("font-size", "12px")
+            .style("paint-order", "stroke")            // als test
+            .style("stroke", "white")                  // als test
+            .style("stroke-width", 3)                  // als test
             .text(location);
+
+
+        //alternative way w highlight in back
+      //      point.append("text")
+      //       .attr("y", -16)
+      //       .attr("text-anchor", "middle")
+      //        .attr("fill", "#00334e")
+      //        .style("font-size", "12px")
+      //        .text(location)
+      //        .each(function() {
+      //          const t = d3.select(this),
+      //                bbox = this.getBBox(),
+      //                padX = 6, padY = 4;
+      //          d3.select(this.parentNode)
+      //            .insert("rect", "text")
+      //            .attr("x", bbox.x - padX)
+      //            .attr("y", bbox.y - padY)
+      //            .attr("width",  bbox.width + padX*2)
+      //            .attr("height", bbox.height + padY*2)
+      //            .attr("rx", 4)
+      //            .attr("fill", "rgba(255,255,255,0.8)")
+      //            .style("filter", "drop-shadow(0 1px 2px rgba(0,0,0,0.3))");
+      //        });
+
         });
 
         const legend = svgMap.append("g")
@@ -301,72 +380,85 @@
       });
     });
 
-    function drawChart(values, location) {
-      d3.select("#chart").html("");
-      const svg = d3.select("#chart")
-                .attr("width", +d3.select("#chart").style("width").slice(0,-2)) 
-                .attr("height", +d3.select("#chart").style("height").slice(0,-2))
-                .html("");
 
-      const margin = {top:30, right:30, bottom:60, left:80},
-            width  = +svg.attr("width")  - margin.left - margin.right,
-            height = +svg.attr("height") - margin.top  - margin.bottom;
+  function drawChart(values, location, strokeColor = "#4dd0e1") {
+  d3.select("#chart").html("");
+  const svg = d3.select("#chart")
+    .attr("width", +d3.select("#chart").style("width").slice(0, -2))
+    .attr("height", +d3.select("#chart").style("height").slice(0, -2))
+    .html("");
 
-      svg.append("rect")
-        .attr("x", 0)
-        .attr("y", 0)
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .attr("fill", "#002e4c");
+  const margin = { top: 30, right: 30, bottom: 60, left: 80 },
+        width  = +svg.attr("width")  - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top  - margin.bottom;
 
-      const g = svg.append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
+  svg.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width",  width + margin.left + margin.right)
+    .attr("height", height + margin.top  + margin.bottom)
+    .attr("fill", "#002e4c");
 
-      const usableWidth = width * 0.9
-      const x = d3.scaleTime()
-        .domain(d3.extent(values, d => d.Date))
-        .range([0, usableWidth]);
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-      const y = d3.scaleLinear()
-        .domain([d3.min(values, d => d["SST (°C)"]) - 1, d3.max(values, d => d["SST (°C)"]) + 1])
-        .range([height, 20]);
+  const usableWidth = width * 0.9;
+  const x = d3.scaleTime()
+    .domain(d3.extent(values, d => d.Date))
+    .range([0, usableWidth]);
 
-      g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
-      g.append("g").call(d3.axisLeft(y));
+  const y = d3.scaleLinear()
+    .domain([
+      d3.min(values, d => d["SST (°C)"]) - 1,
+      d3.max(values, d => d["SST (°C)"]) + 1
+    ])
+    .range([height, 20]);
 
-      g.append("text")
-        .attr("x", width/2-10)
-        .attr("y", 5)
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .text("Location: " + location);
+  g.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x));
 
-      g.append("text")
-        .attr("x", width * 0.9)
-        .attr("y", height * 1.1)
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .text("Date");
+  g.append("g")
+    .call(d3.axisLeft(y));
 
-      g.append("text")
-        .attr("transform", `rotate(-90)`)
-        .attr("y", -40)
-        .attr("x", -height / 2)
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .text("Sea Surface Temperature (°C)");
+  g.append("text")
+    .attr("x", width / 2 - 10)
+    .attr("y", 5)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .text("Location: " + location);
 
-      const line = d3.line()
-        .x(d => x(d.Date))
-        .y(d => y(d["SST (°C)"]));
+  // x‐axis label
+  g.append("text")
+    .attr("x", width * 0.9)
+    .attr("y", height * 1.1)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .text("Date");
 
-      g.append("path")
-        .datum(values)
-        .attr("fill", "none")
-        .attr("stroke", "lightblue")
-        .attr("stroke-width", 2.5)
-        .attr("d", line);
-    }
+  // y‐axis label
+  g.append("text")
+    .attr("transform", `rotate(-90)`)
+    .attr("y", -40)
+    .attr("x", -height / 2)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .text("Sea Surface Temperature (°C)");
+
+  // line generator
+  const line = d3.line()
+    .x(d => x(d.Date))
+    .y(d => y(d["SST (°C)"]));
+
+  // draw the line using the passed‐in color
+  g.append("path")
+    .datum(values)
+    .attr("fill", "none")
+    .attr("stroke", strokeColor)
+    .attr("stroke-width", 2.5)
+    .attr("d", line);
+}
+
   </script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
 </body>
