@@ -5,12 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What's Killing the Reef?</title>
   <style>
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    :root {
+      --reef-bg-start: #00334e;
+      --reef-bg-end:   #0077b6;
+      --text-color:    #fff;
+    }
     body {
       margin: 0;
       background: linear-gradient(to top, #00334e, #0077b6);
       color: white;
       font-family: 'Segoe UI', sans-serif;
-      overflow-x: hidden;
+      overflow-x: hidden;  /* only hide horizontal overflow */
+      /* remove any overflow-y:hidden so charts can scroll */
     }
     header {
       text-align: center;
@@ -39,21 +49,42 @@
     }
 
     #map-container {
-        display: flex;
-        flex-direction: column;
+      display: flex;
+      flex-direction: row;          
+      width: 100vw;
+      height: calc(100vh - 3em);    
+      overflow: hidden;
+      gap: 20px;
     }
 
     #map {
+      flex: 0 0 60%;                      
+      min-width: 0;                 
+      position: relative;
+    }
+
+    #charts {
+      flex: 0 0 40%;                     
+      min-width: 0;
       display: flex;
-      flex-direction: horizontal;
-      height: 600px;
+      flex-direction: column;
+      overflow-y: auto;             
+      position: relative;
     }
 
-    #chart {
+    #map svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #charts svg {
+      width: 100%;
       height: 300px;
-      margin-right: -300px;
-
+      flex-shrink: 0;
+      margin-bottom: 1em;          
     }
+
     .tooltip {
       position: absolute;
       background: rgba(255, 255, 255, 0.9);
@@ -81,19 +112,28 @@
       margin-right: 8px;
       border-radius: 50%;
     }
+    .svg-legend text {
+      fill: white;
+      font-size: 12px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .svg-legend circle {
+      stroke: none;
+    }
   </style>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <header>What's Killing the Reef?</header>
-  <div id = "map-container">     
-    
-    <div id="map"> 
-        <svg id="chart" width="800" height="300"> </svg>
+  <div id="map-container">
+    <!-- LEFT pane: the world map -->
+    <div id="map"></div>
+
+    <!-- RIGHT pane: one or more chart areas -->
+    <div id="charts">
+      <svg id="chart" width="800" height="300"></svg>
     </div>
-
-   </div>
-
+  </div>
 
   <div class="tooltip" style="display:none;"></div>
   <script>
@@ -199,30 +239,37 @@
         nested.forEach((values, location) => {
           const latest = values[values.length - 1];
           const [x, y] = projection([latest.Longitude, latest.Latitude]);
-          svgMap.append("circle")
-            .attr("cx", x)
-            .attr("cy", y)
-            .attr("r", 5)
+
+          const point = svgMap.append("g")
+            .attr("transform", `translate(${x},${y})`);
+            point.append("circle")
+            .attr("r", 10)
             .attr("fill", colorMap[latest["Bleaching Severity"]] || "gray")
             .on("mouseover", function(event) {
-              d3.select(this).transition().attr("r", 8);
+              d3.select(this).transition().attr("r", 15);
               tooltip.style("display", "block")
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 20) + "px")
-                .html(`<strong>${location}</strong><br>SST: ${latest["SST (°C)"]}°C<br>pH: ${latest["pH Level"]}<br>Bleaching: ${latest["Bleaching Severity"]}`);
+                .html(`SST: ${latest["SST (°C)"]}°C<br>pH: ${latest["pH Level"]}<br>Bleaching: ${latest["Bleaching Severity"]}`);
             })
             .on("mouseout", function() {
-              d3.select(this).transition().attr("r", 5);
+              d3.select(this).transition().attr("r", 10);
               tooltip.style("display", "none");
             })
             .on("click", () => drawChart(values, location));
+
+            point.append("text")
+            .attr("y", -16)              
+            .attr("text-anchor", "middle")
+            .attr("fill", "navy")
+            .style("font-size", "12px")
+            .text(location);
         });
 
         const legend = svgMap.append("g")
             .attr("transform", "translate(30, 500)")
             .attr("class", "svg-legend");
 
-        //adding legend for the map wtihin SVG for a cleaner look
         legend.append("text")
             .attr("x", 0)
             .attr("y", -10)
@@ -256,26 +303,47 @@
 
     function drawChart(values, location) {
       d3.select("#chart").html("");
-      const svg = d3.select("#chart"),
-        margin = {top: 20, right: 30, bottom: 40, left: 50},
-        width = +svg.attr("width") - margin.left - margin.right,
-        height = +svg.attr("height") - margin.top - margin.bottom,
-        g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+      const svg = d3.select("#chart")
+                .attr("width", +d3.select("#chart").style("width").slice(0,-2)) 
+                .attr("height", +d3.select("#chart").style("height").slice(0,-2))
+                .html("");
 
+      const margin = {top:30, right:30, bottom:60, left:80},
+            width  = +svg.attr("width")  - margin.left - margin.right,
+            height = +svg.attr("height") - margin.top  - margin.bottom;
+
+      svg.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("fill", "#002e4c");
+
+      const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const usableWidth = width * 0.9
       const x = d3.scaleTime()
         .domain(d3.extent(values, d => d.Date))
-        .range([0, width]);
+        .range([0, usableWidth]);
 
       const y = d3.scaleLinear()
         .domain([d3.min(values, d => d["SST (°C)"]) - 1, d3.max(values, d => d["SST (°C)"]) + 1])
-        .range([height, 0]);
+        .range([height, 20]);
 
       g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
       g.append("g").call(d3.axisLeft(y));
 
       g.append("text")
-        .attr("x", width / 2)
-        .attr("y", height + margin.bottom - 5)
+        .attr("x", width/2-10)
+        .attr("y", 5)
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .text("Location: " + location);
+
+      g.append("text")
+        .attr("x", width * 0.9)
+        .attr("y", height * 1.1)
         .attr("text-anchor", "middle")
         .attr("fill", "white")
         .text("Date");
