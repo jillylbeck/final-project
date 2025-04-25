@@ -43,9 +43,28 @@
       100% { transform: translateY(-100vh); opacity: 0; }
     }
 
+    #aquarium {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        background: #56c2e6;
+        overflow: hidden;
+        border-radius: 10px;
+    }
     .fish {
         position: absolute;
         width: 40px;
+        cursor: pointer;
+    }
+
+    #aquarium-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #aquarium-selector {
+        display: flex;
+        flex-direction: horizontal;
     }
 
     #map-container {
@@ -163,7 +182,21 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-  <header>What's Killing the Reef?</header>
+  <header> Exploring the Health of Our Reefs </header>
+  
+  <div id = "aquarium-container">
+    <p> Marine Biodiversity Aquarium </p>
+    <div id = "aquarium"> </div>
+
+    <div id = "aquarium-selector"> 
+        <p> fish selection </p>
+        <div id = "fishbowl"> </div>
+        <div id = "diversity-chart"> 
+            <svg id = "marine-chart" width = "600" height = "200"> </svg>
+        </div>
+    </div>
+  </div>
+
   <div id="map-container">
     <!-- LEFT pane: the world map -->
     <div id="map"></div>
@@ -194,19 +227,37 @@
     <a href="https://www.flaticon.com/free-icons/clown-fish" title="clown fish icons">Clown fish icons created by Freepik - Flaticon</a>
 
     */
-    function swimFish(fish) {
-        let start = -100; // Start offscreen
-        let amplitude = 20 + Math.random() * 20; // Wave height
-        let frequency = 0.01 + Math.random() * 0.01; // Wave frequency
-        let speed = 0.5 + Math.random(); // Horizontal speed
-        let offset = Math.random() * 100; // Vertical offset
+
+    const aquariumDiv = document.getElementById('aquarium');
+
+
+    for (let i = 0; i < 5; i++) {
+    const fish = document.createElement('img');
+    fish.src = fishImages[i % fishImages.length];
+    fish.classList.add('fish');
+    aquariumDiv.appendChild(fish);  // <-- append to #aquarium
+    swimFish(fish, aquariumDiv);
+    }
+
+    function swimFish(fish, container) {
+        let x = Math.random() * container.clientWidth;  // random starting x
+        let amplitude = 20 + Math.random() * 20;
+        let frequency = 0.01 + Math.random() * 0.01;
+        let speed = (0.5 + Math.random()) * (Math.random() < 0.5 ? 1 : -1); // random direction
+        let offset = Math.random() * (container.clientHeight - 50);
 
         function animate() {
-            start += speed;
-            if (start > window.innerWidth + 100) start = -100;
+            x += speed;
 
-            const y = 40 + amplitude * Math.sin(start * frequency) + offset;
-            fish.style.transform = `translate(${start}px, ${y}px)`;
+            // Check for hitting the left or right edge
+            if (x <= 0 || x >= container.clientWidth - 40) { // assuming fish width ~40px
+            speed *= -1; // reverse direction
+            fish.style.transform = `scaleX(${speed > 0 ? 1 : -1})`; // flip fish image
+            }
+
+            const y = 40 + amplitude * Math.sin(x * frequency) + offset;
+            fish.style.left = `${x}px`;
+            fish.style.top = `${Math.min(Math.max(0, y), container.clientHeight - 40)}px`;
 
             requestAnimationFrame(animate);
         }
@@ -214,16 +265,6 @@
         animate();
         }
 
-        for (let i = 0; i < 5; i++) {
-        const fish = document.createElement('img');
-        fish.src = fishImages[i % fishImages.length];
-        fish.classList.add('fish');
-        fish.style.left = '-100px';
-        fish.style.top = '0px';
-        fish.style.zIndex = '5';
-        document.body.appendChild(fish);
-        swimFish(fish);
-        }
 
     for (let i = 0; i < 20; i++) {
       const bubble = document.createElement('div');
@@ -463,6 +504,11 @@
   <script src="https://d3js.org/topojson.v3.min.js"></script>
 </body>
 </html>
+
+
+
+
+
 
 
 
