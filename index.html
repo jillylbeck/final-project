@@ -93,7 +93,7 @@
         left: 50%;
         width: 100px; /* adjust fish size */
         height: auto;
-        transform: translate(-50%, -50%); /* center it perfectly */
+        transform: translate(-50%, -50%); /* center fish */
         pointer-events: none; /* prevent accidental clicks on the fish */
     }
 
@@ -231,7 +231,7 @@
     <div id = "aquarium-selector"> 
         
         <div id="fishbowl-container"> 
-            <p> fish selection </p>
+            <p id="selected-reef-label"> Select a Reef </p>
             <div id = "fishbowl"> </div>
         </div>
         <div id = "diversity-chart"> 
@@ -311,7 +311,12 @@
             // Check for hitting the left or right edge
             if (x <= 0 || x >= container.clientWidth - 40) { // assuming fish width ~40px
             speed *= -1; // reverse direction
-            fish.style.transform = `scaleX(${speed > 0 ? 1 : -1})`; // flip fish image
+            //fish.style.transform = `scaleX(${speed > 0 ? 1 : -1})`; // flip fish image
+            const fishImage = fish.querySelector('img'); //changing ONLY the fish image and not the labels underneath
+            if (fishImage) {
+            fishImage.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
+            }
+
             }
 
             const y = 40 + amplitude * Math.sin(x * frequency) + offset;
@@ -359,14 +364,39 @@
 
     // Create fish linked to reefs
     reefData.forEach((reef, i) => {
+
+        const fishContainer = document.createElement('div');
+        fishContainer.style.position = "absolute";
+        fishContainer.style.textAlign = "center";
+        fishContainer.style.width = "60px";
+        fishContainer.style.height = "80px";
+
         const fish = document.createElement('img');
         fish.src = fishImages[i % fishImages.length];
         fish.classList.add('fish');
+        fish.style.position = "absolute";
+        fish.style.top = "0";
+        fish.style.left = "50%";
+        fish.style.transform = "translateX(-50%)";
         fish.dataset.location = reef.location;
         fish.dataset.index = i;
-        
-        aquariumDiv.appendChild(fish);
-        swimFish(fish, aquariumDiv);
+
+        const label = document.createElement('div');
+        label.textContent = reef.location;
+        label.style.position = "absolute";
+        label.style.top = "65px";
+        label.style.left = "50%";
+        label.style.transform = "translateX(-50%)";
+        label.style.color = "white";
+        label.style.fontSize = "12px";
+        label.style.zIndex = "5";
+        label.style.pointerEvents = "none";  // ✨ only the LABEL ignores mouse clicks!
+
+        fishContainer.appendChild(fish);
+        fishContainer.appendChild(label);
+        aquariumDiv.appendChild(fishContainer);
+
+        swimFish(fishContainer, aquariumDiv);
 
         fish.addEventListener('click', () => {
             fishbowl.innerHTML = '';
@@ -375,7 +405,9 @@
             selectedFish.style.width = "60px";
             fishbowl.appendChild(selectedFish);
 
-            drawDiversityChart(reef.history, reef.location);  // <-- full timeseries
+            drawDiversityChart(reef.history, reef.location); 
+            document.getElementById('selected-reef-label').textContent = `Selected Reef: ${reef.location}`; //changing label by fish selector to reflect chosen reef
+
         });
     });
 
