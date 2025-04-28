@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What's Killing the Reef?</title>
   <style>
-    
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
     :root {
       --reef-bg-start: #00334e;
       --reef-bg-end:   #0077b6;
@@ -19,8 +16,7 @@
       background: linear-gradient(to top, #00334e, #0077b6);
       color: white;
       font-family: 'Segoe UI', sans-serif;
-      overflow-x: hidden;  /* only hide horizontal overflow */
-      /* remove any overflow-y:hidden so charts can scroll */
+      overflow-x: hidden;
     }
     header {
       text-align: center;
@@ -29,620 +25,371 @@
       font-weight: bold;
       position: relative;
     }
-    .bubble {
-      position: absolute;
-      bottom: -50px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.5);
-      animation: bubble 8s infinite;
-    }
-    @keyframes bubble {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-100vh); opacity: 0; }
-    }
-
     #aquarium {
-        position: relative;
-        width: 100%;
-        height: 270px;
-        background: #56c2e6;
-        overflow: hidden;
-        border-radius: 10px;
-        margin-bottom: none;
+      position: relative;
+      width: 100%;
+      height: 270px;
+      background: #56c2e6;
+      overflow: hidden;
+      border-radius: 10px;
     }
     .fish {
-        position: absolute;
-        width: 60px;
-        cursor: pointer;
+      position: absolute;
+      cursor: pointer;
     }
-
     #aquarium-container {
-        display: flex;
-        flex-direction: column;
-        margin-left: 50px;
-        margin-right: 50px;
+      display: flex;
+      flex-direction: column;
+      margin: 50px;
     }
-    
     #aquarium-selector {
-        display: flex;
-        flex-direction: horizontal;
-        margin-top: 100px;
-        margin-bottom: 100px;
-        align-items: center;
+      display: flex;
+      align-items: center;
+      margin: 100px 0;
     }
-
-
     #fishbowl {
-        width: 600px;
-        height: 600px;
-        background-image: url('images/fishbowl.png');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        position: relative;
-        overflow: hidden;    /* hide anything outside */
-        margin-right: 0;
+      width: 600px;
+      height: 600px;
+      background-image: url('images/fishbowl.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      overflow: hidden;
+      margin-right: 0;
     }
-
-        /* style the selected fish inside the fishbowl */
     #fishbowl img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100px; /* adjust fish size */
-        height: auto;
-        transform: translate(-50%, -50%); /* center fish */
-        pointer-events: none; /* prevent accidental clicks on the fish */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
     }
-
-    #diversity-chart {
-        margin-left: -280px;
-    }
-
-    #marine-chart {
-        margin-left: 300px;   
-        margin-right: 20px;
-    }
-
+    #diversity-chart { margin-left: -280px; }
+    #marine-chart { margin-left: 300px; margin-right: 20px; }
     #map-container {
       display: flex;
-      flex-direction: row;          
       width: 100vw;
-      height: calc(100vh - 3em);    
+      height: calc(100vh - 3em);
       overflow: hidden;
       gap: 20px;
     }
-
-    #map {
-      flex: 0 0 60%;                      
-      min-width: 0;                 
-      position: relative;
-    }
-
-    #map svg {
-      margin-left: 20px;
-    }
-
-    #map g circle {
-      cursor: pointer;
-    }
-    
-    #map g circle:hover {
-      opacity: 0.8;
-    }
-    
-    #charts {
-      flex: 0 0 40%;                     
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;             
-      position: relative;
-    }
-
-    #map svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    #charts svg {
-      width: 100%;
-      height: 300px;
-      flex-shrink: 0;
-      margin-bottom: 1em;          
-    }
-
+    #map { flex: 0 0 60%; min-width: 0; position: relative; }
+    #charts { flex: 0 0 40%; display: flex; flex-direction: column; overflow-y: auto; }
     .tooltip {
       position: absolute;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255,255,255,0.9);
       color: black;
       padding: 5px 10px;
       border-radius: 4px;
       pointer-events: none;
       font-size: 0.9em;
     }
-
-    #map g circle.selected {
-      stroke: #fff;
-      stroke-width: 3px;
-      filter: drop-shadow(0 0 6px #fff);
-    }
-    
-    /*
-    .legend {
-      top: 640px;
-      right: 30px;
-      background: rgba(255, 255, 255, 0.8);
-      color: black;
-      margin-left: 400px;
-      width: 170px;
-      padding: 10px;
-      border-radius: 5px;
-    }
-
-    .legend span {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      margin-right: 8px;
-      border-radius: 50%;
-    }
-    .svg-legend text {
-      fill: white;
-      font-size: 12px;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .svg-legend circle {
-      stroke: none;
-    }
-      */
-
     .svg-legend {
       background: rgba(0, 51, 78, 0.7);
       padding: 8px 12px;
       border-radius: 6px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
-    .svg-legend text {
-      fill: #fff;
-      font-size: 13px;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .svg-legend circle {
-      stroke: #fff;
-      stroke-width: 1px;
-      r: 6;
-    }
-
+    .svg-legend text { fill: white; font-size: 13px; }
+    .svg-legend circle { stroke: #fff; stroke-width: 1px; r: 6; }
   </style>
+
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
 </head>
 <body>
-  <header> Exploring the Health of Our Reefs </header>
-  
-  <div id = "aquarium-container">
-    <p> Marine Biodiversity Aquarium </p>
-    <div id = "aquarium"> </div>
+<header> Exploring the Health of Our Reefs </header>
 
-    <div id = "aquarium-selector"> 
-        
-        <div id="fishbowl-container"> 
-            <p id="selected-reef-label"> Select a Reef </p>
-            <div id = "fishbowl"> </div>
-        </div>
-        <div id = "diversity-chart"> 
-            <svg id = "marine-chart" width = "800" height = "350"> </svg>
-        </div>
+<div id="aquarium-container">
+  <p>Marine Biodiversity Aquarium</p>
+  <div id="aquarium"></div>
+
+  <div id="aquarium-selector">
+    <div id="fishbowl-container">
+      <p id="selected-reef-label"> Select a Reef </p>
+      <div id="fishbowl"></div>
+    </div>
+    <div id="diversity-chart">
+      <svg id="marine-chart" width="800" height="350"></svg>
     </div>
   </div>
+</div>
 
-  <div id="map-container">
-    <!-- LEFT pane: the world map -->
-    <div id="map"></div>
-
-    <!-- RIGHT pane: one or more chart areas -->
-    <div id="charts">
-      <svg id="chart" width="800" height="300"></svg>
-    </div>
+<div id="map-container">
+  <div id="map"></div>
+  <div id="charts">
+    <svg id="chart" width="800" height="300"></svg>
   </div>
+</div>
 
-  <div class="tooltip" style="display:none;"></div>
-  <script>
-    const fishImages = ['images/fish.png', 'images/clown-fish.png', 'images/neon-tetras.png', 'images/puffer-fish.png', 'images/seahorse.png', 'images/jellyfish.png', 'images/red-snapper-fish.png']; 
-    // all icon images sourced from flat icon with following attribution: 
-    /*  fish.png: 
-    <a href="https://www.flaticon.com/free-icons/fish" title="fish icons">Fish icons created by Freepik - Flaticon</a>
+<div class="tooltip" style="display:none;"></div>
 
-    Neon tetras: 
-    <a href="https://www.flaticon.com/free-icons/fish" title="fish icons">Fish icons created by Freepik - Flaticon</a>
+<script>
+const fishImages = [
+  'images/fish.png', 'images/clown-fish.png', 'images/neon-tetras.png', 
+  'images/puffer-fish.png', 'images/seahorse.png', 'images/jellyfish.png', 
+  'images/red-snapper-fish.png'
+];
 
-    Puffer fish: 
-    <a href="https://www.flaticon.com/free-icons/puffer-fish" title="puffer fish icons">Puffer fish icons created by Aranagraphics - Flaticon</a>
+const aquariumDiv = document.getElementById('aquarium');
+const fishbowl = document.getElementById('fishbowl');
 
-    Seahorse: 
-    <a href="https://www.flaticon.com/free-icons/seahorse" title="seahorse icons">Seahorse icons created by Freepik - Flaticon</a>
+const svgMap = d3.select("#map").append("svg")
+  .attr("width", 800)
+  .attr("height", 600);
 
-    Clown Fish: 
-    <a href="https://www.flaticon.com/free-icons/clown-fish" title="clown fish icons">Clown fish icons created by Freepik - Flaticon</a>
+const projection = d3.geoNaturalEarth1()
+  .scale(160)
+  .translate([440, 300]);
+const path = d3.geoPath().projection(projection);
+const tooltip = d3.select(".tooltip");
 
-    Jellyfish: 
-    <a href="https://www.flaticon.com/free-icons/jellyfish" title="jellyfish icons">Jellyfish icons created by BZZRINCANTATION - Flaticon</a>
+// Animate Fish
+function swimFish(fish, container) {
+  let x = Math.random() * container.clientWidth;
+  let amplitude = 20 + Math.random() * 20;
+  let frequency = 0.01 + Math.random() * 0.01;
+  let speed = (0.5 + Math.random()*0.2) * (Math.random() < 0.5 ? 1 : -1);
+  let offset = Math.random() * (container.clientHeight - 50);
 
-    Red Snapper: 
-    <a href="https://www.flaticon.com/free-icons/fish" title="fish icons">Fish icons created by Freepik - Flaticon</a>
-    */
-    const aquariumDiv = document.getElementById('aquarium');
-    const fishbowl = document.getElementById('fishbowl');
-
-    const svgMap = d3.select("#map").append("svg")
-        .attr("width", 800)
-        .attr("height", 600);
-
-    const mapW = +svgMap.attr("width"),
-        mapH = +svgMap.attr("height");
-
-    const projection = d3.geoNaturalEarth1()
-        .scale(160)
-        .translate([mapW * 0.55, mapH / 2]);
-
-    const path = d3.geoPath().projection(projection); 
-    const tooltip = d3.select(".tooltip");
-
-
-    //const projection = d3.geoNaturalEarth1()
-    //  .scale(160)
-    //  .translate([480, 300]);
-
-
-    function swimFish(fish, container) {
-        let x = Math.random() * container.clientWidth;  // random starting x
-        let amplitude = 20 + Math.random() * 20;
-        let frequency = 0.01 + Math.random() * 0.01;
-        let speed = (0.5 + Math.random()* 0.2) * (Math.random() < 0.5 ? 1 : -1); // random direction
-        let offset = Math.random() * (container.clientHeight - 50);
-
-        function animate() {
-            x += speed;
-
-            // Check for hitting the left or right edge
-            if (x <= 0 || x >= container.clientWidth - 40) { // assuming fish width ~40px
-            speed *= -1; // reverse direction
-            //fish.style.transform = `scaleX(${speed > 0 ? 1 : -1})`; // flip fish image
-            const fishImage = fish.querySelector('img'); //changing ONLY the fish image and not the labels underneath
-            if (fishImage) {
-            fishImage.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
-            }
-
-            }
-
-            const y = 40 + amplitude * Math.sin(x * frequency) + offset;
-            fish.style.left = `${x}px`;
-            fish.style.top = `${Math.min(Math.max(0, y), container.clientHeight - 40)}px`;
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
-        }
-
-
-    for (let i = 0; i < 20; i++) {
-      const bubble = document.createElement('div');
-      bubble.classList.add('bubble');
-      bubble.style.left = Math.random() * 5 + 'vw';
-      bubble.style.animationDelay = Math.random() * 8 + 's';
-      document.body.appendChild(bubble);
-
-      const bubbleRight = bubble.cloneNode();
-      bubbleRight.style.left = 95 + Math.random() * 5 + 'vw';
-      document.body.appendChild(bubbleRight);
+  function animate() {
+    x += speed;
+    if (x <= 0 || x >= container.clientWidth - 40) {
+      speed *= -1;
+      const fishImage = fish.querySelector('img');
+      if (fishImage) {
+        fishImage.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
+      }
     }
-
-
-
-//MAKING THE FISH SELECTOR VISUALIZATION and MAP
-    //loading in the ocean csv
-    d3.csv("data/ocean.csv").then(data => {
-        data.forEach(d => {
-            d.Latitude = +d.Latitude;
-            d.Longitude = +d.Longitude;
-            d["SST (°C)"] = +d["SST (°C)"];
-            d["Species Observed"] = +d["Species Observed"]; //getting the count of marine species for each row and extracting the dates
-            d.Date = d3.timeParse("%Y-%m-%d")(d.Date);
-        });
-
-    const grouped = d3.group(data, d => d.Location);
-    const reefData = Array.from(grouped, ([location, records]) => {
-        records.sort((a, b) => d3.ascending(a.Date, b.Date));
-        const latest = records[records.length - 1];
-        return { location, latest, history: records };
-    });
-
-    // Create fish linked to reefs
-    reefData.forEach((reef, i) => {
-
-        const fishContainer = document.createElement('div');
-        fishContainer.style.position = "absolute";
-        fishContainer.style.textAlign = "center";
-        fishContainer.style.width = "60px";
-        fishContainer.style.height = "80px";
-
-        const fish = document.createElement('img');
-        fish.src = fishImages[i % fishImages.length];
-        fish.classList.add('fish');
-        fish.style.position = "absolute";
-        fish.style.top = "0";
-        fish.style.left = "50%";
-        fish.style.transform = "translateX(-50%)";
-        fish.dataset.location = reef.location;
-        fish.dataset.index = i;
-
-        const label = document.createElement('div');
-        label.textContent = reef.location;
-        label.style.position = "absolute";
-        label.style.top = "65px";
-        label.style.left = "50%";
-        label.style.transform = "translateX(-50%)";
-        label.style.color = "white";
-        label.style.fontSize = "12px";
-        label.style.zIndex = "5";
-        label.style.pointerEvents = "none";  // ✨ only the LABEL ignores mouse clicks!
-
-        fishContainer.appendChild(fish);
-        fishContainer.appendChild(label);
-        aquariumDiv.appendChild(fishContainer);
-
-        swimFish(fishContainer, aquariumDiv);
-
-        fish.addEventListener('click', () => {
-            fishbowl.innerHTML = '';
-            const selectedFish = document.createElement('img');
-            selectedFish.src = fish.src;
-            selectedFish.style.width = "60px";
-            fishbowl.appendChild(selectedFish);
-
-            drawDiversityChart(reef.history, reef.location); 
-            document.getElementById('selected-reef-label').textContent = `Selected Reef: ${reef.location}`; //changing label by fish selector to reflect chosen reef
-
-        });
-    });
-
-    //MAP VISUALIZATION
-    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(worldData => {
-      const countries = topojson.feature(worldData, worldData.objects.countries);
-
-      svgMap.append("rect")
-        .attr("width", 960)
-        .attr("height", 600)
-        .attr("opacity", .2)
-        .attr("fill", "#ffffff");
-
-      svgMap.append("path")
-        .datum(countries)
-        .attr("d", path)
-        .attr("fill", "white")
-        .attr("stroke", "#888");
-
-        data.forEach(d => {
-          d.Latitude = +d.Latitude;
-          d.Longitude = +d.Longitude;
-          d["SST (°C)"] = +d["SST (°C)"];
-        });
-
-        const nested = d3.group(data, d => d.Location);
-        const colorMap = { "None": "green", "Low": "yellow", "Medium": "orange", "High": "red" };
-
-        reefData.forEach(reef => {
-            const [x, y] = projection([reef.latest.Longitude, reef.latest.Latitude]);
-
-            const point = svgMap.append("g")
-                .attr("transform", `translate(${x},${y})`);
-
-            point.append("circle")
-                .attr("r", 10)
-                .attr("fill", colorMap[reef.latest["Bleaching Severity"]] || "gray")
-                .on("mouseover", function(event) {
-                d3.select(this).transition().attr("r", 15);
-                tooltip.style("display", "block")
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 20) + "px")
-                    .html(`SST: ${reef.latest["SST (°C)"]}°C<br>pH: ${reef.latest["pH Level"]}<br>Bleaching: ${reef.latest["Bleaching Severity"]}`);
-                })
-                .on("mouseout", function() {
-                d3.select(this).transition().attr("r", 10);
-                tooltip.style("display", "none");
-                })
-                .on("click", function(event) {
-                d3.selectAll("#map g circle").classed("selected", false);
-                d3.select(this).classed("selected", true);
-                const dotColor = d3.select(this).attr("fill");
-                drawChart(reef.history, reef.location, dotColor); // <-- full timeseries
-                });
-
-            point.append("text")
-                .attr("y", -16)
-                .attr("text-anchor", "middle")
-                .attr("fill", "navy")
-                .style("font-size", "12px")
-                .style("paint-order", "stroke")
-                .style("stroke", "white")
-                .style("stroke-width", 3)
-                .text(reef.location);
-            });
-
-
-        const legend = svgMap.append("g")
-            .attr("transform", "translate(30, 500)")
-            .attr("class", "svg-legend");
-
-        legend.append("text")
-            .attr("x", 0)
-            .attr("y", -10)
-            .attr("fill", "white")
-            .style("font-size", "14px")
-            .text("Coral Bleaching Risk:");
-
-        const riskLevels = [
-            { label: "High", color: "red" },
-            { label: "Medium", color: "orange" },
-            { label: "Low", color: "yellow" },
-            { label: "None", color: "green" }
-            ];
-
-        riskLevels.forEach((risk, i) => {
-            legend.append("circle")
-                .attr("cx", 0)
-                .attr("cy", i * 20)
-                .attr("r", 6)
-                .attr("fill", risk.color);
-
-            legend.append("text")
-                .attr("x", 15)
-                .attr("y", i * 20 + 4)
-                .attr("fill", "white")
-                .style("font-size", "12px")
-                .text(risk.label);
-            });
-      });
-
-    });
-
-    function drawDiversityChart(values, location) {
-
-        const svg = d3.select("#marine-chart").html("");
-        const margin = { top: 20, right: 30, bottom: 50, left: 60 },
-                width = +svg.attr("width") - margin.left - margin.right,
-                height = +svg.attr("height") - margin.top - margin.bottom;
-
-        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-        const x = d3.scaleTime()
-            .domain(d3.extent(values, d => d.Date))
-            .range([0, width]);
-            
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(values, d => d["Species Observed"])])
-            .range([height, 0]);
-
-        g.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x));
-
-        g.append("g")
-            .call(d3.axisLeft(y));
-
-        const line = d3.line()
-            .x(d => x(d.Date))
-            .y(d => y(d["Species Observed"]));
-
-        g.append("path")
-            .datum(values)
-            .attr("fill", "none")
-            .attr("stroke", "lightblue")
-            .attr("stroke-width", 2)
-            .attr("d", line);
-
-        g.append("text")
-            .attr("x", width / 2)
-            .attr("y", -10)
-            .attr("text-anchor", "middle")
-            .attr("fill", "white")
-            .text(`Species Diversity Over Time: ${location}`);
-        }
-
-//making trendline chart for surface temperature patterns
-  function drawChart(values, location, strokeColor = "#4dd0e1") {
-  d3.select("#chart").html("");
-  const svg = d3.select("#chart")
-    .attr("width", +d3.select("#chart").style("width").slice(0, -2))
-    .attr("height", +d3.select("#chart").style("height").slice(0, -2))
-    .html("");
-
-  const margin = { top: 30, right: 30, bottom: 60, left: 80 },
-        width  = +svg.attr("width")  - margin.left - margin.right,
-        height = +svg.attr("height") - margin.top  - margin.bottom;
-
-  svg.append("rect")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("width",  width + margin.left + margin.right)
-    .attr("height", height + margin.top  + margin.bottom)
-    .attr("fill", "#002e4c");
-
-  const g = svg.append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const usableWidth = width * 0.9;
-  const x = d3.scaleTime()
-    .domain(d3.extent(values, d => d.Date))
-    .range([0, usableWidth]);
-
-  const y = d3.scaleLinear()
-    .domain([
-      d3.min(values, d => d["SST (°C)"]) - 1,
-      d3.max(values, d => d["SST (°C)"]) + 1
-    ])
-    .range([height, 20]);
-
-  g.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x));
-
-  g.append("g")
-    .call(d3.axisLeft(y));
-
-  g.append("text")
-    .attr("x", width / 2 - 10)
-    .attr("y", 5)
-    .attr("text-anchor", "middle")
-    .attr("fill", "white")
-    .text("Location: " + location);
-
-  // x‐axis label
-  g.append("text")
-    .attr("x", width * 0.9)
-    .attr("y", height * 1.1)
-    .attr("text-anchor", "middle")
-    .attr("fill", "white")
-    .text("Date");
-
-  // y‐axis label
-  g.append("text")
-    .attr("transform", `rotate(-90)`)
-    .attr("y", -40)
-    .attr("x", -height / 2)
-    .attr("text-anchor", "middle")
-    .attr("fill", "white")
-    .text("Sea Surface Temperature (°C)");
-
-  // line generator
-  const line = d3.line()
-    .x(d => x(d.Date))
-    .y(d => y(d["SST (°C)"]));
-
-  // draw the line using the passed‐in color
-  g.append("path")
-    .datum(values)
-    .attr("fill", "none")
-    .attr("stroke", strokeColor)
-    .attr("stroke-width", 2.5)
-    .attr("d", line);
+    const y = 40 + amplitude * Math.sin(x * frequency) + offset;
+    fish.style.left = `${x}px`;
+    fish.style.top = `${Math.min(Math.max(0, y), container.clientHeight - 40)}px`;
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
 
-  </script>
-  <script src="https://d3js.org/topojson.v3.min.js"></script>
+for (let i = 0; i < 20; i++) {
+  const bubble = document.createElement('div');
+  bubble.classList.add('bubble');
+  bubble.style.left = Math.random() * 5 + 'vw';
+  bubble.style.animationDelay = Math.random() * 8 + 's';
+  document.body.appendChild(bubble);
+  const bubbleRight = bubble.cloneNode();
+  bubbleRight.style.left = 95 + Math.random() * 5 + 'vw';
+  document.body.appendChild(bubbleRight);
+}
+
+// CSV loading
+d3.csv("data/ocean.csv").then(data => {
+  data.forEach(d => {
+    d.Latitude = +d.Latitude;
+    d.Longitude = +d.Longitude;
+    d["SST (°C)"] = +d["SST (°C)"];
+    d["Species Observed"] = +d["Species Observed"];
+    d.Date = d3.timeParse("%Y-%m-%d")(d.Date);
+  });
+
+  const grouped = d3.group(data, d => d.Location);
+  const reefData = Array.from(grouped, ([location, records]) => {
+    records.sort((a, b) => d3.ascending(a.Date, b.Date));
+    const latest = records[records.length - 1];
+    return { location, latest, history: records };
+  });
+
+  // ⚡ Fish sizing scale
+  const speciesCounts = reefData.map(d => d.latest["Species Observed"]);
+  const minSpecies = Math.min(...speciesCounts);
+  const maxSpecies = Math.max(...speciesCounts);
+  const fishSizeScale = d3.scaleLinear()
+    .domain([minSpecies, maxSpecies])
+    .range([40, 100]);
+
+  reefData.forEach((reef, i) => {
+    const fishContainer = document.createElement('div');
+    fishContainer.style.position = "absolute";
+    fishContainer.style.textAlign = "center";
+
+    const fish = document.createElement('img');
+    fish.src = fishImages[i % fishImages.length];
+    fish.classList.add('fish');
+    fish.style.position = "absolute";
+    fish.style.left = "50%";
+    fish.style.top = "0";
+    fish.style.transform = "translateX(-50%)";
+    fish.dataset.location = reef.location;
+    fish.dataset.index = i;
+    
+    const fishWidth = fishSizeScale(reef.latest["Species Observed"]);
+    fish.style.width = `${fishWidth}px`;
+
+    fish.addEventListener('mouseover', (event) => {
+    tooltip.style("display", "block")
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 20) + "px")
+        .html(`Location: ${reef.location}<br>Species Observed: ${reef.latest["Species Observed"]}`);
+    });
+
+    fish.addEventListener('mousemove', (event) => {
+    tooltip.style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px");
+    });
+
+    fish.addEventListener('mouseout', () => {
+    tooltip.style("display", "none");
+    });
+
+    const label = document.createElement('div');
+    label.textContent = reef.location;
+    label.style.position = "absolute";
+    label.style.top = "70px";
+    label.style.left = "50%";
+    label.style.transform = "translateX(-50%)";
+    label.style.color = "white";
+    label.style.fontSize = "12px";
+    label.style.pointerEvents = "none";
+
+    fishContainer.appendChild(fish);
+    fishContainer.appendChild(label);
+    aquariumDiv.appendChild(fishContainer);
+
+    swimFish(fishContainer, aquariumDiv);
+
+    fish.addEventListener('click', () => {
+      fishbowl.innerHTML = '';
+      const selectedFish = document.createElement('img');
+      selectedFish.src = fish.src;
+      selectedFish.style.width = "100px";
+      fishbowl.appendChild(selectedFish);
+
+      drawDiversityChart(reef.history, reef.location);
+      document.getElementById('selected-reef-label').textContent = `Selected Reef: ${reef.location}`;
+    });
+  });
+
+   // Load world map
+   d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(worldData => {
+    const countries = topojson.feature(worldData, worldData.objects.countries);
+
+    svgMap.append("path")
+      .datum(countries)
+      .attr("d", path)
+      .attr("fill", "white")
+      .attr("stroke", "#888");
+
+    const colorMap = { "None": "green", "Low": "yellow", "Medium": "orange", "High": "red" };
+
+    reefData.forEach(reef => {
+      const [x, y] = projection([reef.latest.Longitude, reef.latest.Latitude]);
+
+      const point = svgMap.append("g")
+        .attr("transform", `translate(${x},${y})`);
+
+      point.append("circle")
+        .attr("r", 10)
+        .attr("fill", colorMap[reef.latest["Bleaching Severity"]] || "gray")
+        .on("mouseover", function(event) {
+          d3.select(this).transition().attr("r", 15);
+          tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px")
+            .html(`SST: ${reef.latest["SST (°C)"]}°C<br>pH: ${reef.latest["pH Level"]}<br>Bleaching: ${reef.latest["Bleaching Severity"]}`);
+        })
+        .on("mouseout", function() {
+          d3.select(this).transition().attr("r", 10);
+          tooltip.style("display", "none");
+        })
+        .on("click", function() {
+          drawTemperatureChart(reef.history, reef.location);
+        });
+
+
+    const label = point.append("text")
+        .attr("y", -16)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "11px")
+        .attr("fill", "black")
+        .text(reef.location);
+
+        const bbox = label.node().getBBox();
+        point.insert("rect", "text")
+            .attr("x", bbox.x - 2)
+            .attr("y", bbox.y - 1)
+            .attr("width", bbox.width + 4)
+            .attr("height", bbox.height + 2)
+            .attr("fill", "white")
+            .attr("rx", 2)
+            .attr("ry", 2);
+    });
+
+    const legend = svgMap.append("g")
+        .attr("class", "svg-legend")
+        .attr("transform", "translate(30,500)");
+
+    legend.append("text")
+        .attr("x", 0)
+        .attr("y", -10)
+        .attr("fill", "white")
+        .style("font-size", "14px")
+        .text("Bleaching Risk:");
+
+    const riskLevels = [
+        { label: "High", color: "red" },
+        { label: "Medium", color: "orange" },
+        { label: "Low", color: "yellow" },
+        { label: "None", color: "green" }
+    ];
+
+    riskLevels.forEach((risk, i) => {
+        legend.append("circle")
+        .attr("cx", 0)
+        .attr("cy", i * 20)
+        .attr("r", 6)
+        .attr("fill", risk.color);
+
+        legend.append("text")
+        .attr("x", 15)
+        .attr("y", i * 20 + 4)
+        .text(risk.label);
+    });
+  });
+});
+
+// draw charts
+function drawDiversityChart(values, location) {
+  const svg = d3.select("#marine-chart").html("");
+  const margin = { top: 20, right: 30, bottom: 50, left: 60 },
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleTime().domain(d3.extent(values, d => d.Date)).range([0, width]);
+  const y = d3.scaleLinear().domain([0, d3.max(values, d => d["Species Observed"])]).range([height, 0]);
+  g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+  g.append("g").call(d3.axisLeft(y));
+  g.append("path").datum(values)
+    .attr("fill", "none").attr("stroke", "lightblue").attr("stroke-width", 2)
+    .attr("d", d3.line().x(d => x(d.Date)).y(d => y(d["Species Observed"])));
+  g.append("text").attr("x", width/2).attr("y", -10).attr("text-anchor", "middle").attr("fill", "white")
+    .text(`Species Diversity Over Time: ${location}`);
+}
+
+function drawTemperatureChart(values, location) {
+  const svg = d3.select("#chart").html("");
+  const margin = { top: 30, right: 30, bottom: 60, left: 80 },
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleTime().domain(d3.extent(values, d => d.Date)).range([0, width]);
+  const y = d3.scaleLinear().domain([d3.min(values, d => d["SST (°C)"]) - 1, d3.max(values, d => d["SST (°C)"]) + 1]).range([height, 0]);
+  g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+  g.append("g").call(d3.axisLeft(y));
+  g.append("path").datum(values)
+    .attr("fill", "none").attr("stroke", "#4dd0e1").attr("stroke-width", 2.5)
+    .attr("d", d3.line().x(d => x(d.Date)).y(d => y(d["SST (°C)"])));
+}
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
