@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What's Killing the Reef?</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --reef-bg-start: #00334e;
+      --reef-bg-end:   #0077b6;
+      --text-color:    #fff;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(to top, #00334e, #0077b6);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      padding: 1em;
+      font-size: 2em;
+      font-weight: bold;
+      position: relative;
+    }
+    /*
+    #aquarium {
+      position: relative;
+      width: 100%;
+      height: 270px;
+      background: #56c2e6;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    */
+    #aquarium {
+        position: relative;
+        width: 100%;
+        height: 270px;
+        background: linear-gradient(to bottom, #56c2e6 0%, #00334e 100%);
+        overflow: hidden;
+        border-radius: 20px;
+        border: 5px solid #1b4d66;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        background-repeat: repeat-y, no-repeat;
+        background-size: cover, cover;
+        background-position: center;
+     }
+
+    .fish {
+      position: absolute;
+      cursor: pointer;
+    }
+    #aquarium-container {
+      display: flex;
+      flex-direction: column;
+      margin: 50px;
+    }
+    #aquarium-selector {
+      display: flex;
+      align-items: center;
+      margin: 100px 0;
+    }
+    #fishbowl {
+      width: 600px;
+      height: 600px;
+      background-image: url('images/fishbowl.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      overflow: hidden;
+      margin-right: 0;
+    }
+    #fishbowl img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    #diversity-chart { margin-left: -350px; overflow: visible; }
+    #marine-chart { margin-left: 300px; margin-right: 20px; }
+
+    #map-container {
+      display: flex;
+      align-items: flex-start;    
+      width: 100%;
+      padding: 20px 40px;    
+      gap: 20px;
+  }
+
+    #map { flex: 0 0 60%; min-width: 0; position: relative; }
+    #charts { flex: 0 0 40%; display: flex; flex-direction: column; overflow-y: auto; }
+    .tooltip {
+      position: absolute;
+      background: rgba(255,255,255,0.9);
+      color: black;
+      padding: 5px 10px;
+      border-radius: 4px;
+      pointer-events: none;
+      font-size: 0.9em;
+    }
+    .svg-legend {
+      background: rgba(0, 51, 78, 0.7);
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    .svg-legend text { fill: white; font-size: 13px; }
+    .svg-legend circle { stroke: #fff; stroke-width: 1px; r: 6; }
+
+    .grid line {
+      stroke: rgba(255,255,255,0.1);
+      stroke-dasharray: 4 4;
+      shape-rendering: crispEdges;
+    }
+    .grid path {
+      display: none;
+    }
+
+
+  </style>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+
+</head>
+<body>
+<header>
+  <h1>Exploring the Health of Our Reefs</h1>
+  <p class="tagline">Dive deep into ocean ecosystems- see how they’re changing, and why it matters.</p>
+</header>
+
+<div id="aquarium-container">
+  <p>Marine Biodiversity Aquarium</p>
+  <div id="aquarium"></div>
+
+  <div id="aquarium-selector">
+    <div id="fishbowl-container">
+      <p id="selected-reef-label"> Select a Reef </p>
+      <div id="fishbowl"></div>
+    </div>
+    <div id="diversity-chart">
+      <svg id="marine-chart" width="800" height="350"></svg>
+    </div>
+  </div>
+</div>
+
+<div id="map-container">
+  <div id="map"></div>
+  <div id="charts">
+    <svg id="chart" width="800" height="300"></svg>
+  </div>
+</div>
+
+<div class="tooltip" style="display:none;"></div>
+
+<script>
+const fishImages = [
+  'images/fish.png', 'images/clown-fish.png', 'images/neon-tetras.png', 
+  'images/puffer-fish.png', 'images/seahorse.png', 'images/jellyfish.png', 
+  'images/red-snapper-fish.png'
+];
+
+const aquariumDiv = document.getElementById('aquarium');
+const fishbowl = document.getElementById('fishbowl');
+
+const svgMap = d3.select("#map").append("svg")
+  .attr("width", 800)
+  .attr("height", 600);
+
+const projection = d3.geoNaturalEarth1()
+  .scale(160)
+  .translate([440, 300]);
+const path = d3.geoPath().projection(projection);
+const tooltip = d3.select(".tooltip");
+
+// Animate Fish
+function swimFish(fish, container) {
+  let x = Math.random() * container.clientWidth;
+  let amplitude = 20 + Math.random() * 20;
+  let frequency = 0.01 + Math.random() * 0.01;
+  let speed = (0.5 + Math.random()*0.2) * (Math.random() < 0.5 ? 1 : -1);
+  let offset = Math.random() * (container.clientHeight - 50);
+
+  function animate() {
+    x += speed;
+    if (x <= 0 || x >= container.clientWidth - 40) {
+      speed *= -1;
+      const fishImage = fish.querySelector('img');
+      if (fishImage) {
+        fishImage.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
+      }
+    }
+    const y = 40 + amplitude * Math.sin(x * frequency) + offset;
+    fish.style.left = `${x}px`;
+    fish.style.top = `${Math.min(Math.max(0, y), container.clientHeight - 40)}px`;
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+for (let i = 0; i < 20; i++) {
+  const bubble = document.createElement('div');
+  bubble.classList.add('bubble');
+  bubble.style.left = Math.random() * 5 + 'vw';
+  bubble.style.animationDelay = Math.random() * 8 + 's';
+  document.body.appendChild(bubble);
+  const bubbleRight = bubble.cloneNode();
+  bubbleRight.style.left = 95 + Math.random() * 5 + 'vw';
+  document.body.appendChild(bubbleRight);
+}
+
+// CSV loading
+d3.csv("data/ocean.csv").then(data => {
+  data.forEach(d => {
+    d.Latitude = +d.Latitude;
+    d.Longitude = +d.Longitude;
+    d["SST (°C)"] = +d["SST (°C)"];
+    d["Species Observed"] = +d["Species Observed"];
+    d.Date = d3.timeParse("%Y-%m-%d")(d.Date);
+  });
+
+  const grouped = d3.group(data, d => d.Location);
+  const reefData = Array.from(grouped, ([location, records]) => {
+    records.sort((a, b) => d3.ascending(a.Date, b.Date));
+    const latest = records[records.length - 1];
+    return { location, latest, history: records };
+  });
+
+  // ⚡ Fish sizing scale
+  const speciesCounts = reefData.map(d => d.latest["Species Observed"]);
+  const minSpecies = Math.min(...speciesCounts);
+  const maxSpecies = Math.max(...speciesCounts);
+  const fishSizeScale = d3.scaleLinear()
+    .domain([minSpecies, maxSpecies])
+    .range([40, 100]);
+
+  reefData.forEach((reef, i) => {
+    const fishContainer = document.createElement('div');
+    fishContainer.style.position = "absolute";
+    fishContainer.style.textAlign = "center";
+
+    const fish = document.createElement('img');
+    fish.src = fishImages[i % fishImages.length];
+    fish.classList.add('fish');
+    fish.style.position = "absolute";
+    fish.style.left = "50%";
+    fish.style.top = "0";
+    fish.style.transform = "translateX(-50%)";
+    fish.dataset.location = reef.location;
+    fish.dataset.index = i;
+    
+    const fishWidth = fishSizeScale(reef.latest["Species Observed"]);
+    fish.style.width = `${fishWidth}px`;
+
+    fish.addEventListener('mouseover', (event) => {
+    tooltip.style("display", "block")
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 20) + "px")
+        .html(`Location: ${reef.location}<br>Species Observed: ${reef.latest["Species Observed"]}`);
+    });
+
+    fish.addEventListener('mousemove', (event) => {
+    tooltip.style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px");
+    });
+
+    fish.addEventListener('mouseout', () => {
+    tooltip.style("display", "none");
+    });
+
+    const label = document.createElement('div');
+    label.textContent = reef.location;
+    label.style.position = "absolute";
+    label.style.top = "70px";
+    label.style.left = "50%";
+    label.style.transform = "translateX(-50%)";
+    label.style.color = "white";
+    label.style.fontSize = "12px";
+    label.style.pointerEvents = "none";
+
+    fishContainer.appendChild(fish);
+    fishContainer.appendChild(label);
+    aquariumDiv.appendChild(fishContainer);
+
+    swimFish(fishContainer, aquariumDiv);
+
+    fish.addEventListener('click', () => {
+      fishbowl.innerHTML = '';
+      const selectedFish = document.createElement('img');
+      selectedFish.src = fish.src;
+      selectedFish.style.width = "100px";
+      fishbowl.appendChild(selectedFish);
+
+      drawDiversityChart(reef.history, reef.location);
+      document.getElementById('selected-reef-label').textContent = `Selected Reef: ${reef.location}`;
+    });
+  });
+
+  function drawDiversityChart(values, location) {
+  const svg = d3.select("#marine-chart").html("");
+
+  const margin = { top: 40, right: 20, bottom: 50, left: 60 };
+  const width  = +svg.attr("width")  - margin.left - margin.right;
+  const height = +svg.attr("height") - margin.top  - margin.bottom;
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleTime()
+    .domain(d3.extent(values, d => d.Date))
+    .range([0, width]);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(values, d => d["Species Observed"]) * 1.1])  // add 10% headroom
+    .range([height, 0]);
+
+  const makeXGrid = () => d3.axisBottom(x).tickSize(-height).tickFormat("");
+  const makeYGrid = () => d3.axisLeft(y).tickSize(-width ).tickFormat("");
+
+  g.append("g")
+    .attr("class", "grid x-grid")
+    .attr("transform", `translate(0,${height})`)
+    .call(makeXGrid());
+
+  g.append("g")
+    .attr("class", "grid y-grid")
+    .call(makeYGrid());
+
+  g.append("g")
+    .attr("class", "axis axis--x")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")))
+    .selectAll("text")
+      .attr("fill", "#fff");
+
+  g.append("g")
+    .attr("class", "axis axis--y")
+    .call(d3.axisLeft(y).ticks(5))
+    .selectAll("text")
+      .attr("fill", "#fff");
+
+  svg.append("text")
+    .attr("x", margin.left + width/2)
+    .attr("y", margin.top + height + 40)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .text("Year");
+
+  svg.append("text")
+    .attr("transform", `translate(${margin.left - 45},${margin.top + height/2})rotate(-90)`)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .text("Species Observed");
+
+  svg.append("text")
+    .attr("x", margin.left + width/2)
+    .attr("y", 20)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .style("font-size", "1.2em")
+    .text(`Species Diversity Over Time: ${location}`);
+
+  g.append("path")
+    .datum(values)
+    .attr("fill", "rgba(77, 208, 225, 0.3)")
+    .attr("stroke", "none")
+    .attr("d", d3.area()
+      .x(d => x(d.Date))
+      .y0(height)
+      .y1(d => y(d["Species Observed"]))
+    );
+
+  g.append("path")
+    .datum(values)
+    .attr("fill", "none")
+    .attr("stroke", "#4dd0e1")
+    .attr("stroke-width", 2)
+    .attr("d", d3.line()
+      .x(d => x(d.Date))
+      .y(d => y(d["Species Observed"]))
+    );
+
+  g.selectAll("circle")
+    .data(values)
+    .enter().append("circle")
+      .attr("cx", d => x(d.Date))
+      .attr("cy", d => y(d["Species Observed"]))
+      .attr("r", 4)
+      .attr("fill", "#fff")
+      .attr("stroke", "#4dd0e1")
+      .on("mouseover", (event, d) => {
+        tooltip
+          .style("display", "block")
+          .style("left",  (event.pageX + 10) + "px")
+          .style("top",   (event.pageY - 30) + "px")
+          .html(`Year: ${d3.timeFormat("%Y")(d.Date)}<br/>Count: ${d["Species Observed"]}`);
+      })
+      .on("mouseout", () => {
+        tooltip.style("display", "none");
+      });
+}
+  
+   // Load world map
+   d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(worldData => {
+    const countries = topojson.feature(worldData, worldData.objects.countries);
+
+    svgMap.append("path")
+      .datum(countries)
+      .attr("d", path)
+      .attr("fill", "white")
+      .attr("stroke", "#888");
+
+    const colorMap = { "None": "green", "Low": "yellow", "Medium": "orange", "High": "red" };
+
+    reefData.forEach(reef => {
+      const [x, y] = projection([reef.latest.Longitude, reef.latest.Latitude]);
+
+      const point = svgMap.append("g")
+        .attr("transform", `translate(${x},${y})`);
+
+      point.append("circle")
+        .attr("r", 10)
+        .attr("fill", colorMap[reef.latest["Bleaching Severity"]] || "gray")
+        .on("mouseover", function(event) {
+          d3.select(this).transition().attr("r", 15);
+          tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px")
+            .html(`SST: ${reef.latest["SST (°C)"]}°C<br>pH: ${reef.latest["pH Level"]}<br>Bleaching: ${reef.latest["Bleaching Severity"]}`);
+        })
+        .on("mouseout", function() {
+          d3.select(this).transition().attr("r", 10);
+          tooltip.style("display", "none");
+        })
+        .on("click", function() {
+          drawTemperatureChart(reef.history, reef.location);
+        });
+
+
+    const label = point.append("text")
+        .attr("y", -16)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "11px")
+        .attr("fill", "black")
+        .text(reef.location);
+
+        const bbox = label.node().getBBox();
+        point.insert("rect", "text")
+            .attr("x", bbox.x - 2)
+            .attr("y", bbox.y - 1)
+            .attr("width", bbox.width + 4)
+            .attr("height", bbox.height + 2)
+            .attr("fill", "white")
+            .attr("rx", 2)
+            .attr("ry", 2);
+    });
+
+    const legend = svgMap.append("g")
+        .attr("class", "svg-legend")
+        .attr("transform", "translate(30,500)");
+
+    legend.append("text")
+        .attr("x", 0)
+        .attr("y", -10)
+        .attr("fill", "white")
+        .style("font-size", "14px")
+        .text("Bleaching Risk:");
+
+    const riskLevels = [
+        { label: "High", color: "red" },
+        { label: "Medium", color: "orange" },
+        { label: "Low", color: "yellow" },
+        { label: "None", color: "green" }
+    ];
+
+    riskLevels.forEach((risk, i) => {
+        legend.append("circle")
+        .attr("cx", 0)
+        .attr("cy", i * 20)
+        .attr("r", 6)
+        .attr("fill", risk.color);
+
+        legend.append("text")
+        .attr("x", 15)
+        .attr("y", i * 20 + 4)
+        .text(risk.label);
+    });
+  });
+});
+
+// draw charts
+function drawTemperatureChart(values, location) {
+  // clear out old chart
+  const svg = d3.select("#chart").html("");
+
+  // margins for title + axis labels
+  const margin = { top: 50, right: 30, bottom: 60, left: 70 },
+        width  = +svg.attr("width")  - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top  - margin.bottom;
+
+  // group everything into one <g>
+  const g = svg.append("g")
+       .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // scales
+  const x = d3.scaleTime()
+      .domain(d3.extent(values, d => d.Date))
+      .range([0, width]);
+
+  const y = d3.scaleLinear()
+      .domain([
+        d3.min(values, d => d["SST (°C)"]) - 1,
+        d3.max(values, d => d["SST (°C)"]) + 1
+      ])
+      .range([height, 0]);
+
+  // gridlines
+  function makeXGrid() { return d3.axisBottom(x).tickSize(-height).tickFormat(""); }
+  function makeYGrid() { return d3.axisLeft(y).tickSize(-width).tickFormat(""); }
+
+  g.append("g")
+    .attr("class", "grid x-grid")
+    .attr("transform", `translate(0,${height})`)
+    .call(makeXGrid());
+
+  g.append("g")
+    .attr("class", "grid y-grid")
+    .call(makeYGrid());
+
+  // axes
+  g.append("g")
+    .attr("class", "axis axis--x")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
+
+  g.append("g")
+    .attr("class", "axis axis--y")
+    .call(d3.axisLeft(y).ticks(6));
+
+  // axis labels
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", margin.left + width/2)
+    .attr("y", margin.top + height + 45)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#fff")
+    .text("Year");
+
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", `translate(${margin.left - 50},${margin.top + height/2})rotate(-90)`)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#fff")
+    .text("Sea Surface Temperature (°C)");
+
+  // title
+  svg.append("text")
+    .attr("class", "chart-title")
+    .attr("x", margin.left + width/2)
+    .attr("y", margin.top - 20)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#fff")
+    .style("font-size", "1.2em")
+    .text(`Sea Surface Temperature: ${location}`);
+
+  // the line itself
+  const line = d3.line()
+    .defined(d => !isNaN(d["SST (°C)"]))
+    .x(d => x(d.Date))
+    .y(d => y(d["SST (°C)"]));
+
+  g.append("path")
+    .datum(values)
+    .attr("fill", "none")
+    .attr("stroke", "#4dd0e1")
+    .attr("stroke-width", 2.5)
+    .attr("d", line);
+}
+
+
+function drawTemperatureChart(values, location) {
+  const svg = d3.select("#chart").html("");
+  const margin = { top: 30, right: 30, bottom: 60, left: 80 },
+        width  = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+
+  const g = svg.append("g")
+               .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleTime()
+              .domain(d3.extent(values, d => d.Date))
+              .range([0, width]);
+
+  const y = d3.scaleLinear()
+              .domain([
+                d3.min(values, d => d["SST (°C)"]) - 1,
+                d3.max(values, d => d["SST (°C)"]) + 1
+              ])
+              .range([height, 0]);
+
+  g.append("g")
+   .attr("transform", `translate(0,${height})`)
+   .call(d3.axisBottom(x));
+
+  g.append("g").call(d3.axisLeft(y));
+
+  g.append("path")
+   .datum(values)
+   .attr("fill", "none")
+   .attr("stroke", "#4dd0e1")
+   .attr("stroke-width", 2.5)
+   .attr("d", d3.line()
+                .x(d => x(d.Date))
+                .y(d => y(d["SST (°C)"])));
+}
+
+
+
+
+</script>
+
+</body>
+</html>
