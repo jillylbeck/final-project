@@ -232,22 +232,18 @@
 
       function animate() {
         x += speed;
-        // horizontal bounce
         if (x <= 0 || x >= container.clientWidth - fishContainer.clientWidth) {
           speed *= -1;
           const fishImg = fishContainer.querySelector('img');
           if (fishImg) fishImg.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
         }
-        // vertical sine motion
         let y = 40 + amplitude * Math.sin(x * frequency) + offset;
-        // top‐edge boop
         if (y <= 0) {
           speed = -speed;
           y = 0;
           const fishImg = fishContainer.querySelector('img');
           if (fishImg) fishImg.style.transform = `scaleX(${speed > 0 ? 1 : -1})`;
         }
-        // clamp bottom
         y = Math.min(Math.max(0, y), container.clientHeight - fishContainer.clientHeight);
 
         fishContainer.style.left = `${x}px`;
@@ -257,7 +253,6 @@
       animate();
     }
 
-    // Bubble background (optional decorative)
     for (let i = 0; i < 20; i++) {
       const bubble = document.createElement('div');
       bubble.classList.add('bubble');
@@ -269,7 +264,6 @@
       document.body.appendChild(bubbleRight);
     }
 
-    // Prepare map SVG & projection
     const svgMap = d3.select("#map").append("svg")
       .attr("width", 800)
       .attr("height", 600);
@@ -361,7 +355,6 @@
           document.getElementById('selected-reef-label').textContent =
             `Selected Reef: ${reef.location}`;
           drawDiversityChart(reef.history, reef.location);
-          // auto-scroll bowl into view
           fishbowl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       });
@@ -562,7 +555,6 @@
        .attr("transform",`translate(0,${height})`).call(makeXGrid());
       g.append("g").attr("class","grid y-grid").call(makeYGrid());
 
-      // axes
       g.append("g")
        .attr("transform",`translate(0,${height})`)
        .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
@@ -581,7 +573,6 @@
          .attr("fill","#fff")
          .text("Sea Surface Temperature (°C)");
 
-      // title
       svg.append("text")
          .attr("x", margin.left + width/2)
          .attr("y", margin.top - 20)
