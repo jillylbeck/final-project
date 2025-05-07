@@ -186,6 +186,11 @@
     </div>
   </div>
 
+  <div id="year-slider-container" style="margin: 2rem auto; text-align: center; color: white;">
+    <label for="yearSlider">Select Year: <span id="yearLabel">---</span></label><br/>
+    <input type="range" id="yearSlider" min="2000" max="2025" step="1" value="2020" style="width: 80%;">
+  </div>
+
   <div id="map-container">
     <div id="map">
       <h2 style="
@@ -196,13 +201,13 @@
       ">Bleaching Risk Map</h2>
     </div>
     <div id="charts">
-      <h2 style="
-        margin:0 0 10px;
-        color:white;
-        font-size:1.2rem;
-      ">Sea Surface Temperature</h2>
-      <svg id="chart" width="400" height="440"></svg>
-    </div>
+      <div id="chart-wrapper" style="text-align: center;">
+        <svg id="chart" width="400" height="440"></svg>
+        <button id="freezeChartBtn" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem; background: #4dd0e1; border: none; color: black; border-radius: 6px; cursor: pointer;">
+          Freeze This Chart
+        </button>
+      </div>
+    <div id="frozen-charts" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1rem;"></div>
   </div>
 
   <div class="tooltip"></div>
@@ -359,6 +364,62 @@
         });
       });
 
+      //updating map to work with slider
+    function updateMapAndChartForYear(year) {
+        // Filter reef data for selected year
+        const filtered = reefData.map(reef => {
+          const record = reef.history.find(d => d3.timeFormat("%Y")(d.Date) == year);
+          return record ? { ...record, location: reef.location } : null;
+        }).filter(Boolean);
+
+        // Update map circles (color and tooltip)
+        svgMap.selectAll("circle").each(function(_, i) {
+          const reef = filtered[i];
+          if (!reef) return;
+
+          const colorMap = {
+            "None": "green", "Low": "yellow", "Medium": "orange", "High": "red"
+          };
+          d3.select(this)
+            .transition()
+            .duration(300)
+            .attr("fill", colorMap[reef["Bleaching Severity"]] || "gray");
+        });
+
+        // Auto-update chart for selected reef (if any)
+        const selected = document.getElementById("selected-reef-label").textContent.replace("Selected Reef: ", "").trim();
+        const selectedReef = reefData.find(r => r.location === selected);
+        if (selectedReef) {
+          drawTemperatureChart(selectedReef.history.filter(d => d3.timeFormat("%Y")(d.Date) == year), selectedReef.location);
+        }
+      }
+
+      //making slider functionality
+      let currentYear = 2020;
+      const yearSlider = document.getElementById("yearSlider");
+      const yearLabel = document.getElementById("yearLabel");
+      yearLabel.textContent = currentYear;
+
+      // Update slider bounds based on your data
+      d3.csv("data/ocean.csv").then(allData => {
+        const years = allData.map(d => +d.Date.split("-")[0]);
+        const minYear = d3.min(years);
+        const maxYear = d3.max(years);
+        yearSlider.min = minYear;
+        yearSlider.max = maxYear;
+        yearSlider.value = maxYear;
+        yearLabel.textContent = maxYear;
+        currentYear = maxYear;
+
+        yearSlider.addEventListener("input", () => {
+          currentYear = +yearSlider.value;
+          yearLabel.textContent = currentYear;
+          updateMapAndChartForYear(currentYear);
+        });
+      });
+
+
+
       // Draw the diversity over time chart
       function drawDiversityChart(values, location) {
         const svg = d3.select("#marine-chart").html("");
@@ -471,21 +532,44 @@
             .attr("r", 10)
             .attr("fill", colorMap[reef.latest["Bleaching Severity"]] || "gray")
             .on("mouseover", function(event) {
+              const selectedYear = +document.getElementById("yearSlider").value;
+              const yearData = reef.history.find(d => +d3.timeFormat("%Y")(d.Date) === selectedYear);
+
               d3.select(this).transition().attr("r", 15);
-              tooltip.style("display","block")
-                     .style("left",(event.pageX+10)+"px")
-                     .style("top",(event.pageY-20)+"px")
-                     .html(
-                       `SST: ${reef.latest["SST (°C)"]}°C<br>` +
-                       `pH: ${reef.latest["pH Level"]}<br>` +
-                       `Bleaching: ${reef.latest["Bleaching Severity"]}`
-                     );
+
+              if (yearData) {
+                tooltip.style("display","block")
+                      .style("left",(event.pageX+10)+"px")
+                      .style("top",(event.pageY-20)+"px")
+                      .html(
+                        `Year: ${selectedYear}<br>` +
+                        `SST: ${yearData["SST (°C)"]}°C<br>` +
+                        `pH: ${yearData["pH Level"]}<br>` +
+                        `Bleaching: ${yearData["Bleaching Severity"]}`
+                      );
+              } else {
+                tooltip.style("display","block")
+                      .style("left",(event.pageX+10)+"px")
+                      .style("top",(event.pageY-20)+"px")
+                      .html(`No data for ${selectedYear}`);
+              }
             })
             .on("mouseout", function() {
               d3.select(this).transition().attr("r", 10);
               tooltip.style("display","none");
             })
-            .on("click", () => drawTemperatureChart(reef.history, reef.location));
+            .on("click", () => {
+              const selectedYear = +document.getElementById("yearSlider").value;
+              const yearData = reef.history.find(d => +d3.timeFormat("%Y")(d.Date) === selectedYear);
+
+              if (yearData) {
+                drawSingleYearBarChart(yearData, reef.location, selectedYear);
+                document.getElementById('selected-reef-label').textContent = `Selected Reef: ${reef.location}`;
+              } else {
+                alert(`No data for ${reef.location} in ${selectedYear}`);
+              }
+            });
+
 
           const label = point.append("text")
             .attr("y", -16)
@@ -529,71 +613,74 @@
       });
     });
 
-    // Single, final drawTemperatureChart function
-    function drawTemperatureChart(values, location) {
-      const svg    = d3.select("#chart").html("");
-      const margin = { top: 50, right: 30, bottom: 60, left: 70 };
-      const width  = +svg.attr("width")  - margin.left - margin.right;
-      const height = +svg.attr("height") - margin.top  - margin.bottom;
-      const g = svg.append("g")
-                   .attr("transform", `translate(${margin.left},${margin.top})`);
+    function drawSingleYearBarChart(data, location, year) {
+      const svg = d3.select("#chart");
+      svg.selectAll("*").remove();
+      const margin = { top: 40, right: 20, bottom: 60, left: 70 };
+      const width = +svg.attr("width") - margin.left - margin.right;
+      const height = +svg.attr("height") - margin.top - margin.bottom;
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-      const x = d3.scaleTime()
-                  .domain(d3.extent(values, d => d.Date))
-                  .range([0, width]);
+      const keys = ["SST (°C)", "Species Observed"];
+      const values = [data["SST (°C)"], data["Species Observed"]];
+      const color = d3.scaleOrdinal().domain(keys).range(["#4dd0e1", "orange"]);
+
+      const x = d3.scaleBand()
+        .domain(keys)
+        .range([0, width])
+        .padding(0.4);
+
       const y = d3.scaleLinear()
-                  .domain([
-                    d3.min(values, d => d["SST (°C)"]) - 1,
-                    d3.max(values, d => d["SST (°C)"]) + 1
-                  ])
-                  .range([height, 0]);
-
-      // grid
-      function makeXGrid() { return d3.axisBottom(x).tickSize(-height).tickFormat(""); }
-      function makeYGrid() { return d3.axisLeft(y).tickSize(-width).tickFormat(""); }
-      g.append("g").attr("class","grid x-grid")
-       .attr("transform",`translate(0,${height})`).call(makeXGrid());
-      g.append("g").attr("class","grid y-grid").call(makeYGrid());
+        .domain([0, d3.max(values) * 1.2])
+        .range([height, 0]);
 
       g.append("g")
-       .attr("transform",`translate(0,${height})`)
-       .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
-      g.append("g").call(d3.axisLeft(y).ticks(6));
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+      
+      g.append("g").call(d3.axisLeft(y));
 
-      // axis labels
+      g.selectAll("rect")
+        .data(keys)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d))
+        .attr("y", d => y(data[d]))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(data[d]))
+        .attr("fill", d => color(d))
+        .on("mouseover", function(event, d) {
+          tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px")
+            .html(`${d}: ${data[d].toFixed(2)}`);
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
+
       svg.append("text")
-         .attr("x", margin.left + width/2)
-         .attr("y", margin.top + height + 45)
-         .attr("text-anchor","middle")
-         .attr("fill","#fff")
-         .text("Year");
-      svg.append("text")
-         .attr("transform",`translate(${margin.left - 50},${margin.top + height/2})rotate(-90)`)
-         .attr("text-anchor","middle")
-         .attr("fill","#fff")
-         .text("Sea Surface Temperature (°C)");
-
-      svg.append("text")
-         .attr("x", margin.left + width/2)
-         .attr("y", margin.top - 20)
-         .attr("text-anchor","middle")
-         .attr("fill","#fff")
-         .style("font-size","1em")
-         .text(`${location}`);
-
-      // line
-      const line = d3.line()
-        .defined(d => !isNaN(d["SST (°C)"]))
-        .x(d => x(d.Date))
-        .y(d => y(d["SST (°C)"]));
-
-      g.append("path")
-       .datum(values)
-       .attr("fill","none")
-       .attr("stroke","#4dd0e1")
-       .attr("stroke-width",2.5)
-       .attr("d", line);
+        .attr("x", margin.left + width / 2)
+        .attr("y", margin.top - 10)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#fff")
+        .style("font-size", "16px")
+        .text(`Reef Data for ${location} (${year})`);
     }
+
+    document.getElementById("freezeChartBtn").addEventListener("click", () => {
+    const svg = d3.select("#chart").node();
+    const clone = svg.cloneNode(true);
+    const container = document.createElement("div");
+    container.style.border = "2px solid #4dd0e1";
+    container.style.borderRadius = "8px";
+    container.style.padding = "8px";
+    container.style.background = "rgba(255,255,255,0.05)";
+    container.style.flex = "0 0 400px";
+
+    container.appendChild(clone);
+    document.getElementById("frozen-charts").appendChild(container);
+  });
+
+
   </script>
 </body>
 </html>
