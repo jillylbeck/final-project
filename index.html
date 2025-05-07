@@ -167,6 +167,15 @@
       stroke-width: 3px;
     }
 
+    #frozen-charts > div {
+  cursor: pointer;
+  transition: transform 0.2s;
+    }
+    #frozen-charts > div:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
+
 
     /* TOOLTIP & LEGEND */
     .tooltip {
@@ -340,6 +349,25 @@
       const fishSizeScale = d3.scaleLinear()
         .domain([d3.min(speciesCounts), d3.max(speciesCounts)])
         .range([40, 100]);
+
+      const defaultReef = reefData[0];
+        if (defaultReef) {
+          document.getElementById('selected-reef-label').textContent = `Selected Reef: ${defaultReef.location}`;
+
+          // Put fish image into fishbowl
+          const sel = document.createElement('img');
+          sel.src = fishImages[0];
+          sel.style.width = "100px";
+          fishbowl.appendChild(sel);
+
+          // Draw charts
+          drawDiversityChart(defaultReef.history, defaultReef.location);
+          const defaultYear = +document.getElementById("yearSlider").value;
+          const yearData = defaultReef.history.find(d => +d3.timeFormat("%Y")(d.Date) === defaultYear);
+          if (yearData) {
+            drawSingleYearBarChart(yearData, defaultReef.location, defaultYear);
+          }
+        }
 
       // Create fish in aquarium
       reefData.forEach((reef, i) => {
@@ -712,9 +740,13 @@
     container.style.flex = "0 0 400px";
 
     container.appendChild(clone);
+
+    container.addEventListener("click", () => {
+      container.remove();
+    });
+
     document.getElementById("frozen-charts").appendChild(container);
   });
-
 
   </script>
 </body>
