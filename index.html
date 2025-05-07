@@ -140,6 +140,34 @@
       height: 100%;
     }
 
+    #live-chart {
+      flex: 0 0 400px;
+      border: 2px solid red;
+      border-radius: 8px;
+      padding: 8px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    #chart-wrapper {
+      display: flex;
+      flex-direction: column; /* ✅ stack live + frozen vertically */
+      gap: 1rem;
+      align-items: center;
+    }
+
+    #frozen-charts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .selected-circle {
+      stroke: red;
+      stroke-width: 3px;
+    }
+
+
     /* TOOLTIP & LEGEND */
     .tooltip {
       position: absolute;
@@ -202,13 +230,16 @@
   </div>
   
   <div id="charts">
-    <div id="chart-wrapper" style="text-align: center;">
-      <button id="freezeChartBtn" style="margin-bottom: 1rem; padding: 0.5rem 1rem; font-size: 1rem; background: #4dd0e1; border: none; color: black; border-radius: 6px; cursor: pointer;">
-        Freeze This Chart
-      </button>
-      <svg id="chart" width="400" height="440"></svg>
+    <button id="freezeChartBtn" style="margin-bottom: 1rem; padding: 0.5rem 1rem; font-size: 1rem; background: #4dd0e1; border: none; color: black; border-radius: 6px; cursor: pointer;">
+      Freeze This Chart
+    </button>
+  
+    <div id="chart-wrapper">
+      <div id="live-chart">
+        <svg id="chart" width="400" height="440"></svg>
+      </div>
+      <div id="frozen-charts"></div>
     </div>
-    <div id="frozen-charts" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1rem;"></div>
   </div>
 
   <div class="tooltip"></div>
